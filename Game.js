@@ -13,8 +13,22 @@ var paddleX = (canvas.width-paddleWidth)/2;
 var rightPressed = false;
 var leftPressed = false;
 
+//score
+var score = 0;
+
+//lives
+var lives = 3;
+
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
+document.addEventListener("mousemove", mouseMoveHandler, false);
+
+function mouseMoveHandler(e) {
+    var relativeX = e.clientX - canvas.offsetLeft;
+    if(relativeX > 0 && relativeX < canvas.width) {
+        paddleX = relativeX - paddleWidth/2;
+    }
+}
 
 //brick variables
 var brickRowCount = 3;
@@ -36,7 +50,7 @@ var brickX = (col*(brickWidth+brickPadding))+brickOffsetLeft;
 var brickY = (row*(brickHeight+brickPadding))+brickOffsetTop;
 
 
-function collisionDetection() {
+function collisionDetection() { 
     for(var col=0; col<brickColumnCount; col++) {
         for(var row=0; row<brickRowCount; row++) {
             var brick = bricks[col][row];
@@ -44,10 +58,27 @@ function collisionDetection() {
                 if(x > brick.x && x < brick.x+brickWidth && y > brick.y && y < brick.y+brickHeight) {
                     dy = -dy;
                     brick.status = 0;
+                    score++;
+                    if(score == brickRowCount*brickColumnCount) {
+                        alert("YOU WIN, CONGRATULATIONS!");
+                        document.location.reload();
+                        clearInterval(interval); // Needed for Chrome to end game
+                    }
                 }
             }
         }
     }
+}
+function drawLives() {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#0095DD";
+    ctx.fillText("Lives: "+lives, canvas.width-65, 20);
+}
+
+function drawScore() {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#0095DD";
+    ctx.fillText("Score: "+score, 8, 20);
 }
 
 function keyDownHandler(e) {
@@ -108,6 +139,8 @@ function draw() {
     drawPaddle();
     drawBricks();
     collisionDetection();
+    drawScore();
+    drawLives();
 
     if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
         dx = -dx;
@@ -120,9 +153,19 @@ function draw() {
             dy = -dy;
         }
         else {
-            alert("GAME OVER");
-            document.location.reload();
-            clearInterval(interval); // Needed for Chrome to end game
+            lives--;
+            if(!lives) {
+                alert("GAME OVER");
+                document.location.reload();
+                clearInterval(interval);
+            }
+            else {
+                x = canvas.width/2;
+                y = canvas.height-30;
+                dx = 2;
+                dy = -2;
+                paddleX = (canvas.width-paddleWidth)/2;
+            }
         }
     }
     if(rightPressed && paddleX < canvas.width-paddleWidth) {
@@ -133,6 +176,7 @@ function draw() {
     }
     x += dx;
     y += dy;
+    requestAnimationFrame(draw);
 }
 
-var interval = setInterval(draw, 10);
+draw();
